@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lab Execution
 
-## Getting Started
+- Input "Lab Order".
+  - Handle the order decomposition into jobs.
+  - Use templates or start from scratch, create your own templates.
+  - Define dependencies manually or from templates.
+  - Check for resources.
+  - Define the parameters of the jobs.
+  - Define the priority of the jobs.
+  - Get an estimate?
 
-First, run the development server:
+- Check/Edit/Update the lab order status
+  - Change parameters/priority/dependencies of the jobs.
+  - Cancel jobs
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Create tasks from the jobs in the queue.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+We will have 2 Queues:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Waiting Queue: jobs that are waiting for some condition to be met (e.g., resource availability, dependencies, etc.)
+- Review Queue: jobs that are waiting for review/approval before they can be executed.
+- Ready Queue: jobs that are ready to be executed.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## TODO
 
-## Learn More
+- CMS Forms for creating/editing lab orders, jobs, tasks, etc.
+- Simple table for those
+- Node View
 
-To learn more about Next.js, take a look at the following resources:
+## Entities
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Resource Type
+- Resource
+- User
+- Job - An atomic unit of work that needs to be done.
+- Parameter - Attribute of the job.
+- Task - A batch of jobs that are executed at the same time.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Users
 
-## Deploy on Vercel
+Internal use, the clients won't use it directly.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Flows
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Production (Client orders)
+- Research
+
+## Extras
+
+- Audit - each action (modification, creation, deletion) is logged with the user and timestamp.
+- Notifications - users are notified of changes in the status of their orders (maybe use some Calendar API)
+- Write protection (don't write if somebody modified the entity since you last read it)
+- LLM integration - use LLMs to assist in job decomposition, parameter estimation, etc.
+- RBAC - Role-Based Access Control, define roles and permissions for users.
+- Integration with other systems - e.g., inventory management, billing, etc.
