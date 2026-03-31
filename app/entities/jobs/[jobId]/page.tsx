@@ -1,0 +1,183 @@
+"use client";
+
+import { useApi } from "@/app/components/providers/ApiProvider";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardContent,
+} from "@/app/components/containers/card";
+import { Label } from "@/app/components/label";
+import { Separator } from "@/app/components/separator";
+import { Button } from "@/app/components/button";
+import { IconArrowLeft, IconCopy, IconEdit, IconTrash } from "@tabler/icons-react";
+import Link from "next/link";
+import { CheckedResourceQuantityI } from "@/lib/core/types";
+
+export default function Page() {
+  const { jobId } = useParams<{ jobId: string }>();
+  const api = useApi();
+  const router = useRouter();
+
+  const { data: job, isPending } = useQuery({
+    queryKey: ["job", jobId],
+    queryFn: () => api.getJobById(jobId),
+  });
+
+  const { data: allParameterTypes } = useQuery({
+    queryKey: ["parameterTypes", "all"],
+    queryFn: () => api.getAllParameterTypes(),
+  });
+
+  const { data: allResourceTypes } = useQuery({
+    queryKey: ["resourceTypes", "all"],
+    queryFn: () => api.getAllResourceTypes(),
+  });
+
+  const { mutate: duplicateJob } = useMutation({
+    mutationFn: () => api.duplicateJob(jobId),
+    onSuccess: (data) => {
+      if (data) router.push(`/entities/jobs/${data.id}`);
+    },
+  });
+
+  const { mutate: deleteJob } = useMutation({
+    mutationFn: () => api.deleteJob(jobId),
+    onSuccess: () => {
+      router.push("/entities/jobs");
+    },
+  });
+
+  if (isPending) {
+    return <p className="p-6 text-sm text-muted-foreground">Loading...</p>;
+  }
+
+  if (!job) {
+    return <p className="p-6 text-sm text-destructive">Job not found.</p>;
+  }
+
+  const parameterTypesMap = new Map(
+    (allParameterTypes ?? []).map((pt) => [pt.id, pt]),
+  );
+  const resourceTypesMap = new Map(
+    (allResourceTypes ?? []).map((rt) => [rt.id, rt]),
+  );
+
+  function renderResourceQuantities(
+    items: CheckedResourceQuantityI[],
+    label: string,
+  ) {
+    if (items.length === 0) {
+      return (
+        <div className="flex flex-col gap-1">
+          <Label className="text-muted-foreground">{label}</Label>
+          <p className="text-sm text-muted-foreground">None</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-2">
+        <Label className="text-muted-foreground">{label}</Label>
+        {items.map((rq, i) => {
+          const rt = resourceTypesMap.get(rq.resourceTypeId);
+          return (
+            <div key={i} className="rounded-md border p-2 text-sm space-y-1">
+              <p>
+                <span className="font-medium">{rt?.name ?? rq.resourceTypeId}</span>
+                {" — "}
+                <span className={rq.ready ? "text-green-600" : "text-muted-foreground"}>
+                  {rq.ready ? "Ready" : "Not ready"}
+                </span>
+              </p>
+              {rq.quantityParameters.length > 0 && (
+                <ul className="ml-4 space-y-0.5">
+                  {rq.quantityParameters.map((qp) => {
+                    const pt = parameterTypesMap.get(qp.parameterTypeId);
+                    return (
+                      <li key={qp.parameterTypeId}>
+                        {pt?.name ?? qp.parameterTypeId}: {String(qp.value)}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Button variant="ghost" size="sm" className="w-fit" asChild>
+        <Link href="/entities/jobs">
+          <IconArrowLeft className="size-4" />
+          Back to list
+        </Link>
+      </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Name: {job.name}</CardTitle>
+          <CardAction className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/entities/jobs/${jobId}/edit`}>
+                <IconEdit className="size-4" />
+                Edit
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => duplicateJob()}
+            >
+              <IconCopy className="size-4" />
+              Duplicate
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteJob()}
+            >
+              <IconTrash className="size-4" />
+              Delete
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <Label className="text-muted-foreground">ID</Label>
+            <p className="text-sm font-mono">{job.id}</p>
+          </div>
+
+          <Separator />
+
+          {renderResourceQuantities(job.inputs, "Inputs")}
+
+          <Separator />
+
+          {renderResourceQuantities(job.outputs, "Outputs")}
+
+          <Separator />
+
+          <div className="flex flex-col gap-1">
+            <Label className="text-muted-foreground">Created</Label>
+            <p className="text-sm">
+              {new Date(job.createdAt).toLocaleString()}
+            </p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-muted-foreground">Updated</Label>
+            <p className="text-sm">
+              {new Date(job.updatedAt).toLocaleString()}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

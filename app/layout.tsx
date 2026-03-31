@@ -1,9 +1,12 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, DM_Sans } from "next/font/google";
-import "./globals.css";
-import { cn } from "@/lib/utils";
+"use client";
 
-const dmSans = DM_Sans({subsets:['latin'],variable:'--font-sans'});
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { DM_Sans, Geist, Geist_Mono } from "next/font/google";
+import { ApiProviderWrapper } from "./components/providers/ApiProvider";
+import { cn } from "./components/utils/utils";
+import "./globals.css";
+
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,10 +18,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Lab Manager",
-  description: "",
-};
+const queryClient = new QueryClient();
 
 export default function RootLayout({
   children,
@@ -28,9 +28,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", dmSans.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        geistSans.variable,
+        geistMono.variable,
+        "font-sans",
+        dmSans.variable,
+      )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col  p-4">
+        <QueryClientProvider client={queryClient}>
+          <ApiProviderWrapper>{children}</ApiProviderWrapper>
+        </QueryClientProvider>
+      </body>
     </html>
   );
 }
