@@ -1,6 +1,6 @@
 "use client";
 
-import { JobForm } from "@/app/components/forms/JobFrom";
+import { JobForm } from "@/app/components/forms/JobForm";
 import { useApi } from "@/app/components/providers/ApiProvider";
 import { OmitEntityFields } from "@/app/components/utils/types";
 import { JobI } from "@/lib/core/types";

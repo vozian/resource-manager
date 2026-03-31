@@ -13,7 +13,12 @@ import {
 import { Label } from "@/app/components/label";
 import { Separator } from "@/app/components/separator";
 import { Button } from "@/app/components/button";
-import { IconArrowLeft, IconCopy, IconEdit, IconTrash } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconCopy,
+  IconEdit,
+  IconTrash,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { CheckedResourceQuantityI } from "@/lib/core/types";
 
@@ -84,22 +89,31 @@ export default function Page() {
         <Label className="text-muted-foreground">{label}</Label>
         {items.map((rq, i) => {
           const rt = resourceTypesMap.get(rq.resourceTypeId);
+          const expectedParamTypeIds = rt?.quantityParameterTypeIds ?? [];
           return (
             <div key={i} className="rounded-md border p-2 text-sm space-y-1">
               <p>
-                <span className="font-medium">{rt?.name ?? rq.resourceTypeId}</span>
+                <span className="font-medium">
+                  {rt?.name ?? rq.resourceTypeId}
+                </span>
                 {" — "}
-                <span className={rq.ready ? "text-green-600" : "text-muted-foreground"}>
+                <span
+                  className={
+                    rq.ready ? "text-green-600" : "text-muted-foreground"
+                  }
+                >
                   {rq.ready ? "Ready" : "Not ready"}
                 </span>
               </p>
-              {rq.quantityParameters.length > 0 && (
+              {expectedParamTypeIds.length > 0 && (
                 <ul className="ml-4 space-y-0.5">
-                  {rq.quantityParameters.map((qp) => {
-                    const pt = parameterTypesMap.get(qp.parameterTypeId);
+                  {expectedParamTypeIds.map((ptId, paramIndex) => {
+                    const pt = parameterTypesMap.get(ptId);
+                    const value = rq.quantityParameters[paramIndex]?.value;
                     return (
-                      <li key={qp.parameterTypeId}>
-                        {pt?.name ?? qp.parameterTypeId}: {String(qp.value)}
+                      <li key={ptId}>
+                        {pt?.name ?? ptId}:{" "}
+                        {value !== undefined ? String(value) : <span className="text-muted-foreground">—</span>}
                       </li>
                     );
                   })}
@@ -130,19 +144,11 @@ export default function Page() {
                 Edit
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => duplicateJob()}
-            >
+            <Button variant="outline" size="sm" onClick={() => duplicateJob()}>
               <IconCopy className="size-4" />
               Duplicate
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => deleteJob()}
-            >
+            <Button variant="destructive" size="sm" onClick={() => deleteJob()}>
               <IconTrash className="size-4" />
               Delete
             </Button>

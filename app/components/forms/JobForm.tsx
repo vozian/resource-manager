@@ -96,12 +96,7 @@ function ParameterValueInput({
     );
   }
 
-  return (
-    <Input
-      placeholder="Value"
-      {...register(name, { required: true })}
-    />
-  );
+  return <Input placeholder="Value" {...register(name, { required: true })} />;
 }
 
 function ResourceQuantitySection({
@@ -147,7 +142,9 @@ function ResourceQuantitySection({
       </div>
 
       {fields.length === 0 && (
-        <p className="text-sm text-muted-foreground">No {title.toLowerCase()} yet.</p>
+        <p className="text-sm text-muted-foreground">
+          No {title.toLowerCase()} yet.
+        </p>
       )}
 
       {fields.map((field, rqIndex) => {
