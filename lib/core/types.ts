@@ -4,8 +4,23 @@ export type EntityI = {
   updatedAt: number;
 };
 
+export type NamedEntityI = EntityI & {
+  name: string;
+};
+
 export type ParameterTypeI = NamedEntityI & {
   valueType: ParameterValueTypeI;
+};
+
+export type ResourceTypeI = NamedEntityI & {
+  constraintParameters: ParameterSetI;
+  quantityParameterTypeIds: string[];
+};
+
+export type JobI = NamedEntityI & {
+  notes: string;
+  mappings: ResourceMappingI[];
+  common: ResourceQuantityI[];
 };
 
 export type ParameterI = {
@@ -13,17 +28,8 @@ export type ParameterI = {
   value: unknown;
 };
 
-export type NamedEntityI = EntityI & {
-  name: string;
-};
-
 export type ParameterTypeSetI = ParameterTypeI[];
 export type ParameterSetI = ParameterI[];
-
-export type ResourceTypeI = NamedEntityI & {
-  constraintParameters: ParameterSetI;
-  quantityParameterTypeIds: string[];
-};
 
 export type ResourceQuantityI = {
   resourceTypeId: string;
@@ -43,10 +49,4 @@ export enum ParameterValueTypeI {
 export type ResourceMappingI = {
   inputs: StatusResourceQuantityI[];
   outputs: ResourceQuantityI[];
-};
-
-export type JobI = NamedEntityI & {
-  notes: string;
-  mappings: ResourceMappingI[];
-  common: ResourceQuantityI[];
 };
