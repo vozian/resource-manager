@@ -62,8 +62,8 @@ export default function Page() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Inputs</TableHead>
-                  <TableHead>Outputs</TableHead>
+                  <TableHead>Mappings</TableHead>
+                  <TableHead>Common</TableHead>
                   <TableHead>Created</TableHead>
                 </TableRow>
               </TableHeader>
@@ -82,8 +82,8 @@ export default function Page() {
                         {job.name}
                       </Link>
                     </TableCell>
-                    <TableCell>{job.inputs.length}</TableCell>
-                    <TableCell>{job.outputs.length}</TableCell>
+                    <TableCell>{job.mappings.length}</TableCell>
+                    <TableCell>{job.common.length}</TableCell>
                     <TableCell>
                       {new Date(job.createdAt).toLocaleDateString()}
                     </TableCell>

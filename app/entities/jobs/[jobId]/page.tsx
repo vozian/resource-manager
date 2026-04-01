@@ -20,7 +20,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { CheckedResourceQuantityI } from "@/lib/core/types";
+import { ResourceQuantityI } from "@/lib/core/types";
 
 export default function Page() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -71,57 +71,30 @@ export default function Page() {
     (allResourceTypes ?? []).map((rt) => [rt.id, rt]),
   );
 
-  function renderResourceQuantities(
-    items: CheckedResourceQuantityI[],
-    label: string,
-  ) {
-    if (items.length === 0) {
-      return (
-        <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground">{label}</Label>
-          <p className="text-sm text-muted-foreground">None</p>
-        </div>
-      );
-    }
-
+  function renderResourceQuantity(rq: ResourceQuantityI) {
+    const rt = resourceTypesMap.get(rq.resourceTypeId);
+    const expectedParamTypeIds = rt?.quantityParameterTypeIds ?? [];
     return (
-      <div className="flex flex-col gap-2">
-        <Label className="text-muted-foreground">{label}</Label>
-        {items.map((rq, i) => {
-          const rt = resourceTypesMap.get(rq.resourceTypeId);
-          const expectedParamTypeIds = rt?.quantityParameterTypeIds ?? [];
-          return (
-            <div key={i} className="rounded-md border p-2 text-sm space-y-1">
-              <p>
-                <span className="font-medium">
-                  {rt?.name ?? rq.resourceTypeId}
-                </span>
-                {" — "}
-                <span
-                  className={
-                    rq.ready ? "text-green-600" : "text-muted-foreground"
-                  }
-                >
-                  {rq.ready ? "Ready" : "Not ready"}
-                </span>
-              </p>
-              {expectedParamTypeIds.length > 0 && (
-                <ul className="ml-4 space-y-0.5">
-                  {expectedParamTypeIds.map((ptId, paramIndex) => {
-                    const pt = parameterTypesMap.get(ptId);
-                    const value = rq.quantityParameters[paramIndex]?.value;
-                    return (
-                      <li key={ptId}>
-                        {pt?.name ?? ptId}:{" "}
-                        {value !== undefined ? String(value) : <span className="text-muted-foreground">—</span>}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          );
-        })}
+      <div className="rounded-md border p-2 text-sm space-y-1">
+        <p className="font-medium">{rt?.name ?? rq.resourceTypeId}</p>
+        {expectedParamTypeIds.length > 0 && (
+          <ul className="ml-4 space-y-0.5">
+            {expectedParamTypeIds.map((ptId, paramIndex) => {
+              const pt = parameterTypesMap.get(ptId);
+              const value = rq.quantityParameters[paramIndex]?.value;
+              return (
+                <li key={ptId}>
+                  {pt?.name ?? ptId}:{" "}
+                  {value !== undefined ? (
+                    String(value)
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     );
   }
@@ -162,11 +135,46 @@ export default function Page() {
 
           <Separator />
 
-          {renderResourceQuantities(job.inputs, "Inputs")}
+          <div className="flex flex-col gap-2">
+            <Label className="text-muted-foreground">Resource Mappings</Label>
+            {job.mappings.length === 0 ? (
+              <p className="text-sm text-muted-foreground">None</p>
+            ) : (
+              job.mappings.map((m, i) => (
+                <div
+                  key={i}
+                  className="rounded-md border p-3 text-sm space-y-2"
+                >
+                  <Label className="text-xs text-muted-foreground">
+                    Mapping {i + 1}
+                  </Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-xs">Input</Label>
+                      {renderResourceQuantity(m.input)}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-xs">Output</Label>
+                      {renderResourceQuantity(m.output)}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
           <Separator />
 
-          {renderResourceQuantities(job.outputs, "Outputs")}
+          <div className="flex flex-col gap-2">
+            <Label className="text-muted-foreground">Common Resources</Label>
+            {job.common.length === 0 ? (
+              <p className="text-sm text-muted-foreground">None</p>
+            ) : (
+              job.common.map((rq, i) => (
+                <div key={i}>{renderResourceQuantity(rq)}</div>
+              ))
+            )}
+          </div>
 
           <Separator />
 

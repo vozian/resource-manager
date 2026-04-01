@@ -40,9 +40,14 @@ export enum ParameterValueTypeI {
   BOOLEAN = "boolean",
 }
 
+export type ResourceMappingI = {
+  input: ResourceQuantityI;
+  output: ResourceQuantityI;
+};
+
 export type JobI = NamedEntityI & {
-  inputs: CheckedResourceQuantityI[];
-  outputs: CheckedResourceQuantityI[];
+  mappings: ResourceMappingI[];
+  common: ResourceQuantityI[];
 };
 
 export type ResourceContainerI = NamedEntityI & {
