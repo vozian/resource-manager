@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useApi } from "@/app/components/providers/ApiProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -20,9 +20,22 @@ import {
   CardAction,
   CardContent,
 } from "@/app/components/containers/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/app/components/dialog";
 import { Button } from "@/app/components/button";
-import { IconArrowLeft, IconPlus } from "@tabler/icons-react";
-import { JobI, ResourceTypeI } from "@/lib/core/types";
+import { Input } from "@/app/components/input-fields/input";
+import { Textarea } from "@/app/components/textarea";
+import { Label } from "@/app/components/label";
+import { Checkbox } from "@/app/components/checkbox";
+import { IconArrowLeft, IconPlus, IconArrowMergeAltRight } from "@tabler/icons-react";
+import { JobI, ResourceQuantityI, ResourceTypeI } from "@/lib/core/types";
+import { OmitEntityFields } from "@/app/components/utils/types";
 import { JobFilters, JobFilter, applyFilters } from "./job-filters";
 
 function statusBreakdown(job: JobI) {
@@ -51,10 +64,35 @@ function commonResourceNames(
     .join(", ");
 }
 
+function resourceQuantityKey(rq: ResourceQuantityI): string {
+  const params = [...rq.quantityParameters]
+    .sort((a, b) => a.parameterTypeId.localeCompare(b.parameterTypeId))
+    .map((qp) => `${qp.parameterTypeId}:${qp.value}`)
+    .join("|");
+  return `${rq.resourceTypeId}::${params}`;
+}
+
+function deduplicateCommonResources(
+  resources: ResourceQuantityI[],
+): ResourceQuantityI[] {
+  const seen = new Set<string>();
+  return resources.filter((rq) => {
+    const key = resourceQuantityKey(rq);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export default function Page() {
   const api = useApi();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<JobFilter[]>([]);
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [mergeName, setMergeName] = useState("");
+  const [mergeNotes, setMergeNotes] = useState("");
 
   const { data: jobs, isPending } = useQuery({
     queryKey: ["jobs", "all"],
@@ -70,6 +108,44 @@ export default function Page() {
     queryKey: ["parameterTypes", "all"],
     queryFn: () => api.getAllParameterTypes(),
   });
+
+  const { mutate: mergeJobs } = useMutation({
+    mutationFn: async () => {
+      const selected = (jobs ?? []).filter((j) => selectedJobIds.has(j.id));
+      const mergedMappings = selected.flatMap((j) => j.mappings);
+      const mergedCommon = deduplicateCommonResources(
+        selected.flatMap((j) => j.common),
+      );
+
+      const newJob = await api.createJob({
+        name: mergeName,
+        notes: mergeNotes,
+        mappings: mergedMappings,
+        common: mergedCommon,
+      } as OmitEntityFields<JobI>);
+
+      await Promise.all(
+        selected.map((j) => api.deleteJob(j.id)),
+      );
+
+      return newJob;
+    },
+    onSuccess: (newJob) => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      setSelectedJobIds(new Set());
+      setMergeDialogOpen(false);
+      router.push(`/entities/jobs/${newJob.id}`);
+    },
+  });
+
+  const toggleJobSelection = (jobId: string) => {
+    setSelectedJobIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(jobId)) next.delete(jobId);
+      else next.add(jobId);
+      return next;
+    });
+  };
 
   const resourceTypesMap = new Map(
     (allResourceTypes ?? []).map((rt) => [rt.id, rt]),
@@ -94,7 +170,21 @@ export default function Page() {
       <Card>
         <CardHeader>
           <CardTitle>Jobs</CardTitle>
-          <CardAction>
+          <CardAction className="flex gap-2">
+            {selectedJobIds.size >= 2 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setMergeName("");
+                  setMergeNotes("");
+                  setMergeDialogOpen(true);
+                }}
+              >
+                <IconArrowMergeAltRight className="size-4" />
+                Merge {selectedJobIds.size} jobs
+              </Button>
+            )}
             <Button variant="outline" size="sm" asChild>
               <Link href="/entities/jobs/new">
                 <IconPlus className="size-4" />
@@ -123,6 +213,7 @@ export default function Page() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10" />
                   <TableHead>Name</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead>Common Resources</TableHead>
@@ -141,6 +232,14 @@ export default function Page() {
                       className="cursor-pointer"
                       onClick={() => router.push(`/entities/jobs/${job.id}`)}
                     >
+                      <TableCell
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedJobIds.has(job.id)}
+                          onCheckedChange={() => toggleJobSelection(job.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Link
                           href={`/entities/jobs/${job.id}`}
@@ -201,6 +300,52 @@ export default function Page() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Merge {selectedJobIds.size} Jobs</DialogTitle>
+            <DialogDescription>
+              All mappings will be combined. Duplicate common resources will be
+              deduplicated. The original jobs will be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="merge-name">Name</Label>
+              <Input
+                id="merge-name"
+                placeholder="Merged job name"
+                value={mergeName}
+                onChange={(e) => setMergeName(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="merge-notes">Notes</Label>
+              <Textarea
+                id="merge-notes"
+                placeholder="Optional notes..."
+                value={mergeNotes}
+                onChange={(e) => setMergeNotes(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setMergeDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!mergeName.trim()}
+              onClick={() => mergeJobs()}
+            >
+              Merge
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
