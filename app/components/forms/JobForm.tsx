@@ -27,66 +27,48 @@ import {
 import { Separator } from "@/app/components/separator";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 
-type QuantityParameterForm = {
-  parameterTypeId: string;
-  value: string;
-};
-
-type ResourceQuantityForm = {
+type ResourceQuantityFormValues = {
   resourceTypeId: string;
-  quantityParameters: QuantityParameterForm[];
+  quantityParameters: { parameterTypeId: string; value: string }[];
 };
 
-type MappingForm = {
-  input: ResourceQuantityForm;
-  output: ResourceQuantityForm;
+type MappingFormValues = {
+  inputs: ResourceQuantityFormValues[];
+  outputs: ResourceQuantityFormValues[];
 };
 
 type FormValues = {
   name: string;
-  mappings: MappingForm[];
-  common: ResourceQuantityForm[];
+  mappings: MappingFormValues[];
+  common: ResourceQuantityFormValues[];
 };
 
-function toRqForm(
-  rq: { resourceTypeId: string; quantityParameters: { parameterTypeId: string; value: unknown }[] } | undefined,
-): ResourceQuantityForm {
-  if (!rq) return { resourceTypeId: "", quantityParameters: [] };
-  return {
-    resourceTypeId: rq.resourceTypeId,
-    quantityParameters: rq.quantityParameters.map((qp) => ({
-      parameterTypeId: qp.parameterTypeId,
-      value: String(qp.value ?? ""),
-    })),
-  };
-}
-
-function ParameterValueInput({
+function QuantityParameterValueInput({
   parameterTypeId,
   allParameterTypes,
   control,
-  basePath,
-  paramIndex,
+  baseName,
+  index,
   register,
 }: {
   parameterTypeId: string;
   allParameterTypes: ParameterTypeSetI;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: any;
-  basePath: string;
-  paramIndex: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: any;
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+  baseName: string;
+  index: number;
+  register: ReturnType<typeof useForm<FormValues>>["register"];
 }) {
-  const pt = allParameterTypes.find((p) => p.id === parameterTypeId);
-  const name = `${basePath}.quantityParameters.${paramIndex}.value`;
+  const parameterType = allParameterTypes.find(
+    (pt) => pt.id === parameterTypeId,
+  );
+  const valueType = parameterType?.valueType;
+  const fieldName = `${baseName}.${index}.value` as any;
 
-  if (pt?.valueType === ParameterValueTypeI.BOOLEAN) {
+  if (valueType === ParameterValueTypeI.BOOLEAN) {
     return (
       <Controller
         control={control}
-        name={name}
-        rules={{ required: true }}
+        name={fieldName}
         render={({ field }) => (
           <Select value={field.value} onValueChange={field.onChange}>
             <SelectTrigger className="w-full">
@@ -102,99 +84,293 @@ function ParameterValueInput({
     );
   }
 
-  if (pt?.valueType === ParameterValueTypeI.NUMBER) {
-    return (
-      <Input
-        type="number"
-        placeholder="Value"
-        {...register(name, { required: true })}
-      />
-    );
+  if (valueType === ParameterValueTypeI.NUMBER) {
+    return <Input type="number" placeholder="Value" {...register(fieldName)} />;
   }
 
-  return <Input placeholder="Value" {...register(name, { required: true })} />;
+  return <Input placeholder="Value" {...register(fieldName)} />;
 }
 
 function ResourceQuantityFields({
-  basePath,
-  label,
   control,
   register,
   watch,
-  allParameterTypes,
+  baseName,
   allResourceTypes,
+  allParameterTypes,
 }: {
-  basePath: string;
-  label: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  watch: any;
-  allParameterTypes: ParameterTypeSetI;
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+  register: ReturnType<typeof useForm<FormValues>>["register"];
+  watch: ReturnType<typeof useForm<FormValues>>["watch"];
+  baseName: string;
   allResourceTypes: ResourceTypeI[];
+  allParameterTypes: ParameterTypeSetI;
 }) {
-  const selectedResourceTypeId = watch(`${basePath}.resourceTypeId`) ?? "";
-  const selectedResourceType = allResourceTypes.find(
-    (rt) => rt.id === selectedResourceTypeId,
-  );
-  const quantityParamTypeIds =
-    selectedResourceType?.quantityParameterTypeIds ?? [];
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: baseName as any,
+  });
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-xs">{label}</Label>
-        <Controller
-          control={control}
-          name={`${basePath}.resourceTypeId`}
-          rules={{ required: true }}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select resource type..." />
-              </SelectTrigger>
-              <SelectContent>
-                {allResourceTypes.map((rt) => (
-                  <SelectItem key={rt.id} value={rt.id}>
-                    {rt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </div>
-      {quantityParamTypeIds.length > 0 && (
-        <div className="flex flex-col gap-2 ml-4">
-          {quantityParamTypeIds.map((ptId, paramIndex) => {
-            const pt = allParameterTypes.find((p) => p.id === ptId);
-            return (
-              <div key={ptId} className="flex flex-col gap-1">
-                <Label className="text-xs">{pt?.name ?? ptId}</Label>
-                <input
-                  type="hidden"
-                  value={ptId}
-                  {...register(
-                    `${basePath}.quantityParameters.${paramIndex}.parameterTypeId`,
-                  )}
-                />
-                <ParameterValueInput
-                  parameterTypeId={ptId}
-                  allParameterTypes={allParameterTypes}
-                  control={control}
-                  basePath={basePath}
-                  paramIndex={paramIndex}
-                  register={register}
-                />
-              </div>
-            );
-          })}
-        </div>
+    <div className="flex flex-col gap-3">
+      {fields.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No resource quantities yet.
+        </p>
       )}
+
+      {fields.map((field, index) => {
+        const watchedResourceTypeId = watch(
+          `${baseName}.${index}.resourceTypeId` as any,
+        );
+        const selectedResourceType = allResourceTypes.find(
+          (rt) => rt.id === watchedResourceTypeId,
+        );
+        const availableQuantityParamTypes = selectedResourceType
+          ? allParameterTypes.filter((pt) =>
+              selectedResourceType.quantityParameterTypeIds.includes(pt.id),
+            )
+          : allParameterTypes;
+
+        return (
+          <Card key={field.id}>
+            <CardContent className="flex flex-col gap-3 pt-4">
+              <div className="flex items-end gap-2">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label>Resource Type</Label>
+                  <Controller
+                    control={control}
+                    name={`${baseName}.${index}.resourceTypeId` as any}
+                    rules={{ required: true }}
+                    render={({ field: selectField }) => (
+                      <Select
+                        value={selectField.value}
+                        onValueChange={selectField.onChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select resource type..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allResourceTypes.map((rt) => (
+                            <SelectItem key={rt.id} value={rt.id}>
+                              {rt.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => remove(index)}
+                >
+                  <IconTrash className="size-4" />
+                </Button>
+              </div>
+
+              <QuantityParameterList
+                control={control}
+                register={register}
+                watch={watch}
+                baseName={`${baseName}.${index}.quantityParameters`}
+                availableParameterTypes={availableQuantityParamTypes}
+                allParameterTypes={allParameterTypes}
+              />
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="self-start"
+        onClick={() =>
+          append({ resourceTypeId: "", quantityParameters: [] } as any)
+        }
+      >
+        <IconPlus className="size-4" />
+        Add Resource
+      </Button>
     </div>
   );
+}
+
+function QuantityParameterList({
+  control,
+  register,
+  watch,
+  baseName,
+  availableParameterTypes,
+  allParameterTypes,
+}: {
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+  register: ReturnType<typeof useForm<FormValues>>["register"];
+  watch: ReturnType<typeof useForm<FormValues>>["watch"];
+  baseName: string;
+  availableParameterTypes: ParameterTypeSetI;
+  allParameterTypes: ParameterTypeSetI;
+}) {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: baseName as any,
+  });
+
+  const watchedParams = watch(baseName as any) ?? [];
+
+  return (
+    <div className="flex flex-col gap-2 pl-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs text-muted-foreground">
+          Quantity Parameters
+        </Label>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => append({ parameterTypeId: "", value: "" } as any)}
+        >
+          <IconPlus className="size-3" />
+          Add
+        </Button>
+      </div>
+
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex items-end gap-2">
+          <div className="flex flex-1 flex-col gap-1.5">
+            {index === 0 && (
+              <Label className="text-xs">Parameter Type</Label>
+            )}
+            <Controller
+              control={control}
+              name={`${baseName}.${index}.parameterTypeId` as any}
+              rules={{ required: true }}
+              render={({ field: selectField }) => (
+                <Select
+                  value={selectField.value}
+                  onValueChange={selectField.onChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableParameterTypes.map((pt) => (
+                      <SelectItem key={pt.id} value={pt.id}>
+                        {pt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+          <div className="flex flex-1 flex-col gap-1.5">
+            {index === 0 && <Label className="text-xs">Value</Label>}
+            <QuantityParameterValueInput
+              parameterTypeId={watchedParams[index]?.parameterTypeId ?? ""}
+              allParameterTypes={allParameterTypes}
+              control={control}
+              baseName={baseName}
+              index={index}
+              register={register}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => remove(index)}
+          >
+            <IconTrash className="size-4" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MappingFields({
+  control,
+  register,
+  watch,
+  mappingIndex,
+  allResourceTypes,
+  allParameterTypes,
+  onRemove,
+}: {
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+  register: ReturnType<typeof useForm<FormValues>>["register"];
+  watch: ReturnType<typeof useForm<FormValues>>["watch"];
+  mappingIndex: number;
+  allResourceTypes: ResourceTypeI[];
+  allParameterTypes: ParameterTypeSetI;
+  onRemove: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-base">Mapping {mappingIndex + 1}</CardTitle>
+        <Button type="button" variant="ghost" size="icon" onClick={onRemove}>
+          <IconTrash className="size-4" />
+        </Button>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div>
+          <Label className="mb-2 block">Inputs</Label>
+          <ResourceQuantityFields
+            control={control}
+            register={register}
+            watch={watch}
+            baseName={`mappings.${mappingIndex}.inputs`}
+            allResourceTypes={allResourceTypes}
+            allParameterTypes={allParameterTypes}
+          />
+        </div>
+
+        <Separator />
+
+        <div>
+          <Label className="mb-2 block">Outputs</Label>
+          <ResourceQuantityFields
+            control={control}
+            register={register}
+            watch={watch}
+            baseName={`mappings.${mappingIndex}.outputs`}
+            allResourceTypes={allResourceTypes}
+            allParameterTypes={allParameterTypes}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function parseParameterValue(
+  parameterTypeId: string,
+  value: string,
+  allParameterTypes: ParameterTypeSetI,
+): unknown {
+  const pt = allParameterTypes.find((p) => p.id === parameterTypeId);
+  if (pt?.valueType === ParameterValueTypeI.NUMBER) return Number(value);
+  if (pt?.valueType === ParameterValueTypeI.BOOLEAN) return value === "true";
+  return value;
+}
+
+function toResourceQuantities(
+  items: ResourceQuantityFormValues[],
+  allParameterTypes: ParameterTypeSetI,
+) {
+  return items.map((item) => ({
+    resourceTypeId: item.resourceTypeId,
+    quantityParameters: item.quantityParameters.map((qp) => ({
+      parameterTypeId: qp.parameterTypeId,
+      value: parseParameterValue(qp.parameterTypeId, qp.value, allParameterTypes),
+    })),
+  }));
 }
 
 export function JobForm({
@@ -219,10 +395,29 @@ export function JobForm({
       name: initialData.name ?? "",
       mappings:
         initialData.mappings?.map((m) => ({
-          input: toRqForm(m.input),
-          output: toRqForm(m.output),
+          inputs: m.inputs.map((rq) => ({
+            resourceTypeId: rq.resourceTypeId,
+            quantityParameters: rq.quantityParameters.map((qp) => ({
+              parameterTypeId: qp.parameterTypeId,
+              value: String(qp.value ?? ""),
+            })),
+          })),
+          outputs: m.outputs.map((rq) => ({
+            resourceTypeId: rq.resourceTypeId,
+            quantityParameters: rq.quantityParameters.map((qp) => ({
+              parameterTypeId: qp.parameterTypeId,
+              value: String(qp.value ?? ""),
+            })),
+          })),
         })) ?? [],
-      common: initialData.common?.map(toRqForm) ?? [],
+      common:
+        initialData.common?.map((rq) => ({
+          resourceTypeId: rq.resourceTypeId,
+          quantityParameters: rq.quantityParameters.map((qp) => ({
+            parameterTypeId: qp.parameterTypeId,
+            value: String(qp.value ?? ""),
+          })),
+        })) ?? [],
     },
   });
 
@@ -232,48 +427,16 @@ export function JobForm({
     remove: removeMapping,
   } = useFieldArray({ control, name: "mappings" });
 
-  const {
-    fields: commonFields,
-    append: appendCommon,
-    remove: removeCommon,
-  } = useFieldArray({ control, name: "common" });
-
-  const coerceParams = (params: QuantityParameterForm[]) =>
-    params.map((qp) => {
-      const pt = allParameterTypes.find((p) => p.id === qp.parameterTypeId);
-      let value: unknown = qp.value;
-      if (pt?.valueType === ParameterValueTypeI.NUMBER) {
-        value = Number(qp.value);
-      } else if (pt?.valueType === ParameterValueTypeI.BOOLEAN) {
-        value = qp.value === "true";
-      }
-      return { parameterTypeId: qp.parameterTypeId, value };
-    });
-
   const submit = handleSubmit((data) => {
     onSubmit({
       name: data.name,
       mappings: data.mappings.map((m) => ({
-        input: {
-          resourceTypeId: m.input.resourceTypeId,
-          quantityParameters: coerceParams(m.input.quantityParameters),
-        },
-        output: {
-          resourceTypeId: m.output.resourceTypeId,
-          quantityParameters: coerceParams(m.output.quantityParameters),
-        },
+        inputs: toResourceQuantities(m.inputs, allParameterTypes),
+        outputs: toResourceQuantities(m.outputs, allParameterTypes),
       })),
-      common: data.common.map((c) => ({
-        resourceTypeId: c.resourceTypeId,
-        quantityParameters: coerceParams(c.quantityParameters),
-      })),
-    } as Partial<JobI>);
+      common: toResourceQuantities(data.common, allParameterTypes),
+    });
   });
-
-  const emptyRq: ResourceQuantityForm = {
-    resourceTypeId: "",
-    quantityParameters: [],
-  };
 
   return (
     <form onSubmit={submit}>
@@ -286,7 +449,7 @@ export function JobForm({
             <Label htmlFor="job-name">Name</Label>
             <Input
               id="job-name"
-              placeholder="e.g. PCR Amplification, Cell Culture"
+              placeholder="e.g. Centrifugation, Incubation"
               aria-invalid={!!errors.name}
               {...register("name", { required: true })}
             />
@@ -297,65 +460,35 @@ export function JobForm({
           {/* Mappings */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <Label>Resource Mappings</Label>
+              <Label>Mappings</Label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  appendMapping({ input: { ...emptyRq }, output: { ...emptyRq } })
-                }
+                onClick={() => appendMapping({ inputs: [], outputs: [] })}
               >
                 <IconPlus className="size-4" />
-                Add
+                Add Mapping
               </Button>
             </div>
 
             {mappingFields.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No resource mappings yet.
+                No mappings yet.
               </p>
             )}
 
             {mappingFields.map((field, index) => (
-              <div
+              <MappingFields
                 key={field.id}
-                className="rounded-md border p-3 flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">
-                    Mapping {index + 1}
-                  </Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeMapping(index)}
-                  >
-                    <IconTrash className="size-4" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <ResourceQuantityFields
-                    basePath={`mappings.${index}.input`}
-                    label="Input"
-                    control={control}
-                    register={register}
-                    watch={watch}
-                    allParameterTypes={allParameterTypes}
-                    allResourceTypes={allResourceTypes}
-                  />
-                  <ResourceQuantityFields
-                    basePath={`mappings.${index}.output`}
-                    label="Output"
-                    control={control}
-                    register={register}
-                    watch={watch}
-                    allParameterTypes={allParameterTypes}
-                    allResourceTypes={allResourceTypes}
-                  />
-                </div>
-              </div>
+                control={control}
+                register={register}
+                watch={watch}
+                mappingIndex={index}
+                allResourceTypes={allResourceTypes}
+                allParameterTypes={allParameterTypes}
+                onRemove={() => removeMapping(index)}
+              />
             ))}
           </div>
 
@@ -363,52 +496,15 @@ export function JobForm({
 
           {/* Common Resources */}
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <Label>Common Resources</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendCommon({ ...emptyRq })}
-              >
-                <IconPlus className="size-4" />
-                Add
-              </Button>
-            </div>
-
-            {commonFields.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No common resources yet.
-              </p>
-            )}
-
-            {commonFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="rounded-md border p-3 flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between">
-                  <ResourceQuantityFields
-                    basePath={`common.${index}`}
-                    label="Resource"
-                    control={control}
-                    register={register}
-                    watch={watch}
-                    allParameterTypes={allParameterTypes}
-                    allResourceTypes={allResourceTypes}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="mt-auto"
-                    onClick={() => removeCommon(index)}
-                  >
-                    <IconTrash className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+            <Label>Common Resources</Label>
+            <ResourceQuantityFields
+              control={control}
+              register={register}
+              watch={watch}
+              baseName="common"
+              allResourceTypes={allResourceTypes}
+              allParameterTypes={allParameterTypes}
+            />
           </div>
         </CardContent>
         <CardFooter className="justify-end">

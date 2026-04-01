@@ -41,11 +41,16 @@ export enum ParameterValueTypeI {
 }
 
 export type ResourceMappingI = {
-  input: ResourceQuantityI;
-  output: ResourceQuantityI;
+  inputs: ResourceQuantityI[];
+  outputs: ResourceQuantityI[];
+};
+
+export type JobRunI = NamedEntityI & {
+  jobRunId: string;
 };
 
 export type JobI = NamedEntityI & {
+  jobRunId: string;
   mappings: ResourceMappingI[];
   common: ResourceQuantityI[];
 };

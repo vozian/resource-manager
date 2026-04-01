@@ -201,7 +201,7 @@ async function deleteJob(jobId: string) {
 
 export async function createApiClient() {
   fetchAllItems();
-  if (allItems.length === 0) {
+  if (true || allItems.length === 0) {
     allItems = seedMockData();
     saveAllItems();
   }

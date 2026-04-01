@@ -150,12 +150,22 @@ export default function Page() {
                   </Label>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">
-                      <Label className="text-xs">Input</Label>
-                      {renderResourceQuantity(m.input)}
+                      <Label className="text-xs">Inputs</Label>
+                      {m.inputs.map((rq, j) => (
+                        <div key={j}>{renderResourceQuantity(rq)}</div>
+                      ))}
+                      {m.inputs.length === 0 && (
+                        <p className="text-xs text-muted-foreground">None</p>
+                      )}
                     </div>
                     <div className="flex flex-col gap-1">
-                      <Label className="text-xs">Output</Label>
-                      {renderResourceQuantity(m.output)}
+                      <Label className="text-xs">Outputs</Label>
+                      {m.outputs.map((rq, j) => (
+                        <div key={j}>{renderResourceQuantity(rq)}</div>
+                      ))}
+                      {m.outputs.length === 0 && (
+                        <p className="text-xs text-muted-foreground">None</p>
+                      )}
                     </div>
                   </div>
                 </div>

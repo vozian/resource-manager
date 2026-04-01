@@ -4,7 +4,7 @@ import { enrichEntityFields } from "./local-mock-api";
 export function seedMockData() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allItems: any[] = [];
-  // Helper to create and store a parameter type, returning its enriched form
+
   function seedParameterType(name: string, valueType: ParameterValueTypeI) {
     const data = enrichEntityFields({ name, valueType });
     allItems.push({ type: "parameterType", data });
@@ -13,11 +13,7 @@ export function seedMockData() {
 
   // --- Parameter Types ---
 
-  // Classification
-  const resourceCategory = seedParameterType(
-    "resourceCategory",
-    ParameterValueTypeI.STRING,
-  );
+  const category = seedParameterType("category", ParameterValueTypeI.STRING);
   const materialType = seedParameterType(
     "materialType",
     ParameterValueTypeI.STRING,
@@ -26,39 +22,17 @@ export function seedMockData() {
     "machineType",
     ParameterValueTypeI.STRING,
   );
-  const role = seedParameterType("role", ParameterValueTypeI.STRING);
-
-  const liquidType = seedParameterType(
-    "liquidType",
-    ParameterValueTypeI.STRING,
-  );
-
-  // Identity
-  const dnaCode = seedParameterType("dnaCode", ParameterValueTypeI.STRING);
-  const proteinCode = seedParameterType(
-    "proteinCode",
-    ParameterValueTypeI.STRING,
-  );
-  const model = seedParameterType("model", ParameterValueTypeI.STRING);
-
-  // Quantity / Usage
-  const volume = seedParameterType("volume", ParameterValueTypeI.NUMBER);
-  const concentration = seedParameterType(
-    "concentration",
-    ParameterValueTypeI.NUMBER,
-  );
-  const duration = seedParameterType("duration", ParameterValueTypeI.NUMBER);
   const temperature = seedParameterType(
     "temperature",
     ParameterValueTypeI.NUMBER,
   );
-  const quantity = seedParameterType("quantity", ParameterValueTypeI.NUMBER);
-  const rpmSpeed = seedParameterType("rpmSpeed", ParameterValueTypeI.NUMBER);
-  const wellCount = seedParameterType("wellCount", ParameterValueTypeI.NUMBER);
-  const isQcPassed = seedParameterType(
-    "isQcPassed",
-    ParameterValueTypeI.BOOLEAN,
+  const duration = seedParameterType("duration", ParameterValueTypeI.NUMBER);
+  const dnaCode = seedParameterType("dnaCode", ParameterValueTypeI.STRING);
+  const concentration = seedParameterType(
+    "concentration",
+    ParameterValueTypeI.NUMBER,
   );
+  const wellCount = seedParameterType("wellCount", ParameterValueTypeI.NUMBER);
 
   // --- Resource Types ---
 
@@ -77,103 +51,194 @@ export function seedMockData() {
   }
 
   // Materials
-  seedResourceType(
-    "DNA Sample",
+  const twistDna = seedResourceType(
+    "Twist DNA",
     [
-      { parameterTypeId: resourceCategory.id, value: "material" },
-      { parameterTypeId: materialType.id, value: "dna" },
-      { parameterTypeId: dnaCode.id, value: "DY-4521" },
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Twist DNA" },
     ],
-    [volume.id, concentration.id],
+    [wellCount.id, concentration.id, dnaCode.id],
   );
 
-  seedResourceType(
-    "Protein Sample",
+  const dilutedDna = seedResourceType(
+    "Diluted DNA",
     [
-      { parameterTypeId: resourceCategory.id, value: "material" },
-      { parameterTypeId: materialType.id, value: "protein" },
-      { parameterTypeId: proteinCode.id, value: "PRO-8831" },
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Diluted DNA" },
     ],
-    [volume.id, concentration.id],
+    [wellCount.id, concentration.id, dnaCode.id],
   );
 
-  seedResourceType(
+  const protein = seedResourceType(
+    "Protein",
+    [
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Protein" },
+    ],
+    [wellCount.id, concentration.id, dnaCode.id],
+  );
+
+  const antigen = seedResourceType(
     "Antigen",
     [
-      { parameterTypeId: resourceCategory.id, value: "material" },
-      { parameterTypeId: materialType.id, value: "antigen" },
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Antigen" },
     ],
-    [volume.id, concentration.id, isQcPassed.id],
+    [wellCount.id, concentration.id],
   );
 
-  seedResourceType(
-    "Reagent",
+  const targetMeasurement = seedResourceType(
+    "Target Measurement",
     [
-      { parameterTypeId: resourceCategory.id, value: "material" },
-      { parameterTypeId: materialType.id, value: "reagent" },
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Biosensor" },
     ],
-    [volume.id, quantity.id],
-  );
-
-  // Plates
-  seedResourceType(
-    "Plate Well",
-    [
-      { parameterTypeId: resourceCategory.id, value: "plate" },
-      { parameterTypeId: liquidType.id, value: "dna" },
-    ],
-    [wellCount.id, volume.id, concentration.id],
+    [wellCount.id],
   );
 
   // Machines
-  seedResourceType(
+  const expressionMachine = seedResourceType(
+    "Expression Machine",
+    [
+      { parameterTypeId: category.id, value: "machine" },
+      { parameterTypeId: machineType.id, value: "expression machine" },
+    ],
+    [duration.id, temperature.id],
+  );
+
+  const liquidHandler = seedResourceType(
     "Liquid Handler",
     [
-      { parameterTypeId: resourceCategory.id, value: "machine" },
-      { parameterTypeId: machineType.id, value: "liquid-handler" },
-      { parameterTypeId: model.id, value: "Hamilton STAR" },
+      { parameterTypeId: category.id, value: "machine" },
+      { parameterTypeId: machineType.id, value: "liquid handler" },
     ],
     [duration.id],
   );
 
-  seedResourceType(
-    "Incubator",
+  const bliMachine = seedResourceType(
+    "BLI Machine",
     [
-      { parameterTypeId: resourceCategory.id, value: "machine" },
-      { parameterTypeId: machineType.id, value: "incubator" },
-      { parameterTypeId: model.id, value: "Thermo HERAcell" },
-    ],
-    [duration.id, temperature.id, rpmSpeed.id],
-  );
-
-  seedResourceType(
-    "BLI Instrument",
-    [
-      { parameterTypeId: resourceCategory.id, value: "machine" },
-      { parameterTypeId: machineType.id, value: "bli-instrument" },
-      { parameterTypeId: model.id, value: "Octet RED96" },
+      { parameterTypeId: category.id, value: "machine" },
+      { parameterTypeId: machineType.id, value: "BLI machine" },
     ],
     [duration.id],
   );
 
-  seedResourceType(
-    "Centrifuge",
+  // --- Jobs ---
+
+  function seedJob(
+    name: string,
+    mappings: { inputs: object[]; outputs: object[] }[],
+    common: object[],
+  ) {
+    const data = enrichEntityFields({ name, mappings, common });
+    allItems.push({ type: "job", data });
+    return data;
+  }
+
+  // DNA Dilution: Twist DNA → Diluted DNA, using Liquid Handler
+  seedJob(
+    "DNA Dilution",
     [
-      { parameterTypeId: resourceCategory.id, value: "machine" },
-      { parameterTypeId: machineType.id, value: "centrifuge" },
-      { parameterTypeId: model.id, value: "Eppendorf 5810R" },
+      {
+        inputs: [
+          {
+            resourceTypeId: twistDna.id,
+            quantityParameters: [
+              { parameterTypeId: concentration.id, value: 100 },
+              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+            ],
+          },
+        ],
+        outputs: [
+          {
+            resourceTypeId: dilutedDna.id,
+            quantityParameters: [
+              { parameterTypeId: concentration.id, value: 10 },
+              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+            ],
+          },
+        ],
+      },
     ],
-    [duration.id, rpmSpeed.id],
+    [
+      {
+        resourceTypeId: liquidHandler.id,
+        quantityParameters: [{ parameterTypeId: duration.id, value: 1800 }],
+      },
+    ],
   );
 
-  // Humans
-  seedResourceType(
-    "Lab Technician",
+  // Protein Expression: Diluted DNA → Protein, using Expression Machine
+  seedJob(
+    "Protein Expression",
     [
-      { parameterTypeId: resourceCategory.id, value: "human" },
-      { parameterTypeId: role.id, value: "technician" },
+      {
+        inputs: [
+          {
+            resourceTypeId: dilutedDna.id,
+            quantityParameters: [
+              { parameterTypeId: concentration.id, value: 10 },
+              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+            ],
+          },
+        ],
+        outputs: [
+          {
+            resourceTypeId: protein.id,
+            quantityParameters: [
+              { parameterTypeId: concentration.id, value: 5 },
+              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+            ],
+          },
+        ],
+      },
     ],
-    [duration.id],
+    [
+      {
+        resourceTypeId: expressionMachine.id,
+        quantityParameters: [
+          { parameterTypeId: duration.id, value: 86400 },
+          { parameterTypeId: temperature.id, value: 37 },
+        ],
+      },
+    ],
+  );
+
+  // BLI Binding Assay: Protein + Antigen → Target Measurement, using BLI Machine
+  seedJob(
+    "BLI Binding Assay",
+    [
+      {
+        inputs: [
+          {
+            resourceTypeId: protein.id,
+            quantityParameters: [
+              { parameterTypeId: concentration.id, value: 2 },
+              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+            ],
+          },
+          {
+            resourceTypeId: antigen.id,
+            quantityParameters: [
+              { parameterTypeId: concentration.id, value: 10 },
+            ],
+          },
+        ],
+        outputs: [
+          {
+            resourceTypeId: targetMeasurement.id,
+            quantityParameters: [],
+          },
+        ],
+      },
+    ],
+    [
+      {
+        resourceTypeId: bliMachine.id,
+        quantityParameters: [{ parameterTypeId: duration.id, value: 7200 }],
+      },
+    ],
   );
 
   return allItems;
