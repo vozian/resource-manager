@@ -45,10 +45,6 @@ export type ResourceMappingI = {
   outputs: ResourceQuantityI[];
 };
 
-export type JobRunI = NamedEntityI & {
-  jobRunId: string;
-};
-
 export type JobI = NamedEntityI & {
   jobRunId: string;
   mappings: ResourceMappingI[];

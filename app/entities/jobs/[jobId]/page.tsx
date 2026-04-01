@@ -136,7 +136,7 @@ export default function Page() {
           <Separator />
 
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground">Resource Mappings</Label>
+            <Label className="text-muted-foreground">Resource Flow</Label>
             {job.mappings.length === 0 ? (
               <p className="text-sm text-muted-foreground">None</p>
             ) : (
@@ -146,7 +146,7 @@ export default function Page() {
                   className="rounded-md border p-3 text-sm space-y-2"
                 >
                   <Label className="text-xs text-muted-foreground">
-                    Mapping {i + 1}
+                    Item {i + 1}
                   </Label>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">

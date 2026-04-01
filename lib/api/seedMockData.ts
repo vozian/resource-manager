@@ -50,41 +50,83 @@ export function seedMockData() {
     return data;
   }
 
-  // Materials
-  const twistDna = seedResourceType(
-    "Twist DNA",
+  // Materials — dnaCode and concentration are constraint parameters,
+  // so each code/concentration combination is a distinct resource type.
+
+  const twistDna100_ATCGATCG = seedResourceType(
+    "Twist DNA (ATCGATCG, 100 ng/µL)",
     [
       { parameterTypeId: category.id, value: "material" },
       { parameterTypeId: materialType.id, value: "Twist DNA" },
+      { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+      { parameterTypeId: concentration.id, value: 100 },
     ],
-    [wellCount.id, concentration.id, dnaCode.id],
+    [wellCount.id],
   );
 
-  const dilutedDna = seedResourceType(
-    "Diluted DNA",
+  const twistDna100_GCTAGCTA = seedResourceType(
+    "Twist DNA (GCTAGCTA, 100 ng/µL)",
+    [
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Twist DNA" },
+      { parameterTypeId: dnaCode.id, value: "GCTAGCTA" },
+      { parameterTypeId: concentration.id, value: 100 },
+    ],
+    [wellCount.id],
+  );
+
+  const dilutedDna10_ATCGATCG = seedResourceType(
+    "Diluted DNA (ATCGATCG, 10 ng/µL)",
     [
       { parameterTypeId: category.id, value: "material" },
       { parameterTypeId: materialType.id, value: "Diluted DNA" },
+      { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+      { parameterTypeId: concentration.id, value: 10 },
     ],
-    [wellCount.id, concentration.id, dnaCode.id],
+    [wellCount.id],
   );
 
-  const protein = seedResourceType(
-    "Protein",
+  const dilutedDna10_GCTAGCTA = seedResourceType(
+    "Diluted DNA (GCTAGCTA, 10 ng/µL)",
+    [
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Diluted DNA" },
+      { parameterTypeId: dnaCode.id, value: "GCTAGCTA" },
+      { parameterTypeId: concentration.id, value: 10 },
+    ],
+    [wellCount.id],
+  );
+
+  const protein5_ATCGATCG = seedResourceType(
+    "Protein (ATCGATCG, 5 mg/mL)",
     [
       { parameterTypeId: category.id, value: "material" },
       { parameterTypeId: materialType.id, value: "Protein" },
+      { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+      { parameterTypeId: concentration.id, value: 5 },
     ],
-    [wellCount.id, concentration.id, dnaCode.id],
+    [wellCount.id],
   );
 
-  const antigen = seedResourceType(
-    "Antigen",
+  const protein2_ATCGATCG = seedResourceType(
+    "Protein (ATCGATCG, 2 mg/mL)",
+    [
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Protein" },
+      { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+      { parameterTypeId: concentration.id, value: 2 },
+    ],
+    [wellCount.id],
+  );
+
+  const antigen10 = seedResourceType(
+    "Antigen (10 µg/mL)",
     [
       { parameterTypeId: category.id, value: "material" },
       { parameterTypeId: materialType.id, value: "Antigen" },
+      { parameterTypeId: concentration.id, value: 10 },
     ],
-    [wellCount.id, concentration.id],
+    [wellCount.id],
   );
 
   const targetMeasurement = seedResourceType(
@@ -136,26 +178,24 @@ export function seedMockData() {
     return data;
   }
 
-  // DNA Dilution: Twist DNA → Diluted DNA, using Liquid Handler
+  // DNA Dilution: Twist DNA (100) → Diluted DNA (10), using Liquid Handler
   seedJob(
     "DNA Dilution",
     [
       {
         inputs: [
           {
-            resourceTypeId: twistDna.id,
+            resourceTypeId: twistDna100_ATCGATCG.id,
             quantityParameters: [
-              { parameterTypeId: concentration.id, value: 100 },
-              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+              { parameterTypeId: wellCount.id, value: 96 },
             ],
           },
         ],
         outputs: [
           {
-            resourceTypeId: dilutedDna.id,
+            resourceTypeId: dilutedDna10_ATCGATCG.id,
             quantityParameters: [
-              { parameterTypeId: concentration.id, value: 10 },
-              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+              { parameterTypeId: wellCount.id, value: 96 },
             ],
           },
         ],
@@ -169,26 +209,24 @@ export function seedMockData() {
     ],
   );
 
-  // Protein Expression: Diluted DNA → Protein, using Expression Machine
+  // Protein Expression: Diluted DNA (10) → Protein (5), using Expression Machine
   seedJob(
     "Protein Expression",
     [
       {
         inputs: [
           {
-            resourceTypeId: dilutedDna.id,
+            resourceTypeId: dilutedDna10_ATCGATCG.id,
             quantityParameters: [
-              { parameterTypeId: concentration.id, value: 10 },
-              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+              { parameterTypeId: wellCount.id, value: 96 },
             ],
           },
         ],
         outputs: [
           {
-            resourceTypeId: protein.id,
+            resourceTypeId: protein5_ATCGATCG.id,
             quantityParameters: [
-              { parameterTypeId: concentration.id, value: 5 },
-              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+              { parameterTypeId: wellCount.id, value: 96 },
             ],
           },
         ],
@@ -205,30 +243,31 @@ export function seedMockData() {
     ],
   );
 
-  // BLI Binding Assay: Protein + Antigen → Target Measurement, using BLI Machine
+  // BLI Binding Assay: Protein (2) + Antigen (10) → Target Measurement, using BLI Machine
   seedJob(
     "BLI Binding Assay",
     [
       {
         inputs: [
           {
-            resourceTypeId: protein.id,
+            resourceTypeId: protein2_ATCGATCG.id,
             quantityParameters: [
-              { parameterTypeId: concentration.id, value: 2 },
-              { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+              { parameterTypeId: wellCount.id, value: 48 },
             ],
           },
           {
-            resourceTypeId: antigen.id,
+            resourceTypeId: antigen10.id,
             quantityParameters: [
-              { parameterTypeId: concentration.id, value: 10 },
+              { parameterTypeId: wellCount.id, value: 48 },
             ],
           },
         ],
         outputs: [
           {
             resourceTypeId: targetMeasurement.id,
-            quantityParameters: [],
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 48 },
+            ],
           },
         ],
       },
