@@ -151,9 +151,33 @@ export default function Page() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">
                       <Label className="text-xs">Inputs</Label>
-                      {m.inputs.map((rq, j) => (
-                        <div key={j}>{renderResourceQuantity(rq)}</div>
-                      ))}
+                      {m.inputs.map((rq, j) => {
+                        const statusColor = {
+                          ready: "bg-green-500/15 text-green-700",
+                          unavailable: "bg-red-500/15 text-red-700",
+                          canceled: "bg-gray-500/15 text-gray-600",
+                          review: "bg-amber-500/15 text-amber-700",
+                        }[rq.status] ?? "bg-muted text-muted-foreground";
+                        const dotColor = {
+                          ready: "bg-green-500",
+                          unavailable: "bg-red-500",
+                          canceled: "bg-gray-400",
+                          review: "bg-amber-500",
+                        }[rq.status] ?? "bg-muted-foreground";
+                        return (
+                          <div key={j}>
+                            {renderResourceQuantity(rq)}
+                            <span
+                              className={`mt-1 ml-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                            >
+                              <span
+                                className={`size-1.5 rounded-full ${dotColor}`}
+                              />
+                              {rq.status}
+                            </span>
+                          </div>
+                        );
+                      })}
                       {m.inputs.length === 0 && (
                         <p className="text-xs text-muted-foreground">None</p>
                       )}

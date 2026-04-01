@@ -30,8 +30,8 @@ export type ResourceQuantityI = {
   quantityParameters: ParameterSetI;
 };
 
-export type CheckedResourceQuantityI = ResourceQuantityI & {
-  ready: boolean;
+export type StatusResourceQuantityI = ResourceQuantityI & {
+  status: "ready" | "unavailable" | "canceled" | "review";
 };
 
 export enum ParameterValueTypeI {
@@ -41,12 +41,11 @@ export enum ParameterValueTypeI {
 }
 
 export type ResourceMappingI = {
-  inputs: ResourceQuantityI[];
+  inputs: StatusResourceQuantityI[];
   outputs: ResourceQuantityI[];
 };
 
 export type JobI = NamedEntityI & {
-  jobRunId: string;
   mappings: ResourceMappingI[];
   common: ResourceQuantityI[];
 };

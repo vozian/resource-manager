@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useForm, useFieldArray, Controller } from "react-hook-form";
@@ -30,6 +31,7 @@ import { IconPlus, IconTrash } from "@tabler/icons-react";
 type ResourceQuantityFormValues = {
   resourceTypeId: string;
   quantityParameters: { parameterTypeId: string; value: string }[];
+  status?: "ready" | "unavailable" | "canceled" | "review";
 };
 
 type MappingFormValues = {
@@ -98,6 +100,7 @@ function ResourceQuantityFields({
   baseName,
   allResourceTypes,
   allParameterTypes,
+  showReady = false,
 }: {
   control: ReturnType<typeof useForm<FormValues>>["control"];
   register: ReturnType<typeof useForm<FormValues>>["register"];
@@ -105,6 +108,7 @@ function ResourceQuantityFields({
   baseName: string;
   allResourceTypes: ResourceTypeI[];
   allParameterTypes: ParameterTypeSetI;
+  showReady?: boolean;
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -132,8 +136,22 @@ function ResourceQuantityFields({
             )
           : allParameterTypes;
 
+        const watchedStatus = showReady
+          ? watch(`${baseName}.${index}.status` as any)
+          : undefined;
+
+        const statusBorderColor = {
+          ready: "border-l-green-500",
+          unavailable: "border-l-red-500",
+          canceled: "border-l-gray-400",
+          review: "border-l-amber-500",
+        }[watchedStatus as string] ?? "";
+
         return (
-          <Card key={field.id}>
+          <Card
+            key={field.id}
+            className={showReady ? `border-l-4 ${statusBorderColor}` : ""}
+          >
             <CardContent className="flex flex-col gap-3 pt-4">
               <div className="flex items-end gap-2">
                 <div className="flex flex-1 flex-col gap-1.5">
@@ -161,6 +179,51 @@ function ResourceQuantityFields({
                     )}
                   />
                 </div>
+                {showReady && (
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <Label>Status</Label>
+                    <Controller
+                      control={control}
+                      name={`${baseName}.${index}.status` as any}
+                      render={({ field: statusField }) => (
+                        <Select
+                          value={statusField.value}
+                          onValueChange={statusField.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select status..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ready">
+                              <span className="flex items-center gap-2">
+                                <span className="size-2 rounded-full bg-green-500" />
+                                Ready
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="unavailable">
+                              <span className="flex items-center gap-2">
+                                <span className="size-2 rounded-full bg-red-500" />
+                                Unavailable
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="canceled">
+                              <span className="flex items-center gap-2">
+                                <span className="size-2 rounded-full bg-gray-400" />
+                                Canceled
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="review">
+                              <span className="flex items-center gap-2">
+                                <span className="size-2 rounded-full bg-amber-500" />
+                                Review
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                )}
                 <Button
                   type="button"
                   variant="ghost"
@@ -190,7 +253,11 @@ function ResourceQuantityFields({
         size="sm"
         className="self-start"
         onClick={() =>
-          append({ resourceTypeId: "", quantityParameters: [] } as any)
+          append({
+            resourceTypeId: "",
+            quantityParameters: [],
+            ...(showReady ? { status: "review" } : {}),
+          } as any)
         }
       >
         <IconPlus className="size-4" />
@@ -242,9 +309,7 @@ function QuantityParameterList({
       {fields.map((field, index) => (
         <div key={field.id} className="flex items-end gap-2">
           <div className="flex flex-1 flex-col gap-1.5">
-            {index === 0 && (
-              <Label className="text-xs">Parameter Type</Label>
-            )}
+            {index === 0 && <Label className="text-xs">Parameter Type</Label>}
             <Controller
               control={control}
               name={`${baseName}.${index}.parameterTypeId` as any}
@@ -328,6 +393,7 @@ function MappingFields({
             baseName={`mappings.${mappingIndex}.inputs`}
             allResourceTypes={allResourceTypes}
             allParameterTypes={allParameterTypes}
+            showReady
           />
         </div>
 
@@ -368,7 +434,11 @@ function toResourceQuantities(
     resourceTypeId: item.resourceTypeId,
     quantityParameters: item.quantityParameters.map((qp) => ({
       parameterTypeId: qp.parameterTypeId,
-      value: parseParameterValue(qp.parameterTypeId, qp.value, allParameterTypes),
+      value: parseParameterValue(
+        qp.parameterTypeId,
+        qp.value,
+        allParameterTypes,
+      ),
     })),
   }));
 }
@@ -401,6 +471,7 @@ export function JobForm({
               parameterTypeId: qp.parameterTypeId,
               value: String(qp.value ?? ""),
             })),
+            status: rq.status ?? "review",
           })),
           outputs: m.outputs.map((rq) => ({
             resourceTypeId: rq.resourceTypeId,
@@ -431,7 +502,12 @@ export function JobForm({
     onSubmit({
       name: data.name,
       mappings: data.mappings.map((m) => ({
-        inputs: toResourceQuantities(m.inputs, allParameterTypes),
+        inputs: toResourceQuantities(m.inputs, allParameterTypes).map(
+          (rq, i) => ({
+            ...rq,
+            status: m.inputs[i].status ?? "review",
+          }),
+        ),
         outputs: toResourceQuantities(m.outputs, allParameterTypes),
       })),
       common: toResourceQuantities(data.common, allParameterTypes),
@@ -473,9 +549,7 @@ export function JobForm({
             </div>
 
             {mappingFields.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No mappings yet.
-              </p>
+              <p className="text-sm text-muted-foreground">No mappings yet.</p>
             )}
 
             {mappingFields.map((field, index) => (
