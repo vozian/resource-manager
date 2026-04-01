@@ -45,6 +45,19 @@ export default function Page() {
             </Card>
           </Link>
         ))}
+        <Link href="/wizards">
+          <Card className="h-full transition-colors hover:bg-muted/50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Job Wizards</CardTitle>
+                <IconArrowRight className="size-4 text-muted-foreground" />
+              </div>
+              <CardDescription>
+                Create jobs from templates with guided forms.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
       </div>
     </div>
   );

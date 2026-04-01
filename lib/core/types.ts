@@ -50,34 +50,3 @@ export type JobI = NamedEntityI & {
   mappings: ResourceMappingI[];
   common: ResourceQuantityI[];
 };
-
-export type ResourceContainerI = NamedEntityI & {
-  id: string;
-  parameters: ParameterSetI;
-};
-
-export type ResourceInstanceI = NamedEntityI & {
-  resourceContainerId: string;
-  availableFrom: number;
-  // Exclusive - the resource is available until this time, but not at this time
-  availableUntil: number;
-  availableQuantity: ResourceQuantityI;
-  reservedQuantity: ResourceQuantityI;
-  // location: unknown; // TBD
-};
-
-export type JobTemplateI = Omit<JobI, "inputs" | "outputs">;
-
-export type ExperimentI = NamedEntityI & {
-  jobs: JobI[];
-};
-
-export type TaskI = NamedEntityI & {
-  jobIds: string[];
-};
-
-// TBD
-export type NoteI = {
-  id: string;
-  content: string;
-};
