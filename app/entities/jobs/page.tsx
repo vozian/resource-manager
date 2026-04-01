@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useApi } from "@/app/components/providers/ApiProvider";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -22,6 +23,7 @@ import {
 import { Button } from "@/app/components/button";
 import { IconArrowLeft, IconPlus } from "@tabler/icons-react";
 import { JobI, ResourceTypeI } from "@/lib/core/types";
+import { JobFilters, JobFilter, applyFilters } from "./job-filters";
 
 function statusBreakdown(job: JobI) {
   const counts: Record<string, number> = {};
@@ -52,6 +54,8 @@ function commonResourceNames(
 export default function Page() {
   const api = useApi();
   const router = useRouter();
+  const [filters, setFilters] = useState<JobFilter[]>([]);
+
   const { data: jobs, isPending } = useQuery({
     queryKey: ["jobs", "all"],
     queryFn: () => api.getAllJobs(),
@@ -62,12 +66,21 @@ export default function Page() {
     queryFn: () => api.getAllResourceTypes(),
   });
 
+  const { data: allParameterTypes } = useQuery({
+    queryKey: ["parameterTypes", "all"],
+    queryFn: () => api.getAllParameterTypes(),
+  });
+
   const resourceTypesMap = new Map(
     (allResourceTypes ?? []).map((rt) => [rt.id, rt]),
   );
 
-  const sortedJobs = jobs
-    ? [...jobs].sort((a, b) => b.mappings.length - a.mappings.length)
+  const filteredJobs = jobs
+    ? applyFilters(jobs, filters, allParameterTypes ?? [])
+    : undefined;
+
+  const sortedJobs = filteredJobs
+    ? [...filteredJobs].sort((a, b) => b.mappings.length - a.mappings.length)
     : undefined;
 
   return (
@@ -90,7 +103,16 @@ export default function Page() {
             </Button>
           </CardAction>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
+          {allResourceTypes && allParameterTypes && (
+            <JobFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              allResourceTypes={allResourceTypes}
+              allParameterTypes={allParameterTypes}
+            />
+          )}
+
           {isPending && (
             <p className="text-sm text-muted-foreground">Loading...</p>
           )}
