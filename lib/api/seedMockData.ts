@@ -211,17 +211,13 @@ export function seedMockData() {
           {
             resourceTypeId: twistDna100_ATCGATCG.id,
             status: "ready" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
         outputs: [
           {
             resourceTypeId: dilutedDna10_ATCGATCG.id,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
       },
@@ -230,17 +226,13 @@ export function seedMockData() {
           {
             resourceTypeId: twistDna100_GCTAGCTA.id,
             status: "ready" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
         outputs: [
           {
             resourceTypeId: dilutedDna10_GCTAGCTA.id,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
       },
@@ -265,17 +257,13 @@ export function seedMockData() {
           {
             resourceTypeId: dilutedDna10_ATCGATCG.id,
             status: "ready" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
         outputs: [
           {
             resourceTypeId: protein5_ATCGATCG.id,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
       },
@@ -284,17 +272,13 @@ export function seedMockData() {
           {
             resourceTypeId: dilutedDna10_GCTAGCTA.id,
             status: "review" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
         outputs: [
           {
             resourceTypeId: protein5_GCTAGCTA.id,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 96 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
       },
@@ -321,17 +305,13 @@ export function seedMockData() {
           {
             resourceTypeId: dilutedDna10_ATCGATCG.id,
             status: "review" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
         outputs: [
           {
             resourceTypeId: protein2_ATCGATCG.id,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
       },
@@ -357,24 +337,18 @@ export function seedMockData() {
           {
             resourceTypeId: protein2_ATCGATCG.id,
             status: "ready" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
           {
             resourceTypeId: antigen10.id,
             status: "ready" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
         outputs: [
           {
             resourceTypeId: targetMeasurement.id,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
       },
@@ -383,24 +357,18 @@ export function seedMockData() {
           {
             resourceTypeId: protein2_GCTAGCTA.id,
             status: "review" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
           {
             resourceTypeId: antigen10.id,
             status: "ready" as const,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
         outputs: [
           {
             resourceTypeId: targetMeasurement.id,
-            quantityParameters: [
-              { parameterTypeId: wellCount.id, value: 48 },
-            ],
+            quantityParameters: [{ parameterTypeId: wellCount.id, value: 1 }],
           },
         ],
       },

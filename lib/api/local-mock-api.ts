@@ -199,9 +199,14 @@ async function deleteJob(jobId: string) {
   saveAllItems();
 }
 
+async function resetToMockData() {
+  allItems = seedMockData();
+  saveAllItems();
+}
+
 export async function createApiClient() {
   fetchAllItems();
-  if (true || allItems.length === 0) {
+  if (allItems.length === 0) {
     allItems = seedMockData();
     saveAllItems();
   }
@@ -225,5 +230,6 @@ export async function createApiClient() {
     updateJob,
     duplicateJob,
     deleteJob,
+    resetToMockData,
   };
 }

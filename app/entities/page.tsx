@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useApi } from "@/app/components/providers/ApiProvider";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@/app/components/containers/card";
-import { IconArrowRight } from "@tabler/icons-react";
+import { Button } from "@/app/components/button";
+import { IconArrowRight, IconRefresh } from "@tabler/icons-react";
 
 const entityTypes = [
   {
@@ -28,9 +31,23 @@ const entityTypes = [
 ];
 
 export default function Page() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  const handleReset = async () => {
+    await api.resetToMockData();
+    queryClient.invalidateQueries();
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-medium">Entities</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-medium">Entities</h1>
+        <Button variant="outline" size="sm" onClick={handleReset}>
+          <IconRefresh className="size-4" />
+          Reset to mock data
+        </Button>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {entityTypes.map((entity) => (
           <Link key={entity.href} href={entity.href}>
