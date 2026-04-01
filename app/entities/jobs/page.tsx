@@ -33,7 +33,11 @@ import { Input } from "@/app/components/input-fields/input";
 import { Textarea } from "@/app/components/textarea";
 import { Label } from "@/app/components/label";
 import { Checkbox } from "@/app/components/checkbox";
-import { IconArrowLeft, IconPlus, IconArrowMergeAltRight } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconPlus,
+  IconArrowMergeAltRight,
+} from "@tabler/icons-react";
 import { JobI, ResourceQuantityI, ResourceTypeI } from "@/lib/core/types";
 import { OmitEntityFields } from "@/app/components/utils/types";
 import { JobFilters, JobFilter, applyFilters } from "./job-filters";
@@ -60,7 +64,10 @@ function commonResourceNames(
   resourceTypesMap: Map<string, ResourceTypeI>,
 ) {
   return job.common
-    .map((rq) => resourceTypesMap.get(rq.resourceTypeId)?.name ?? rq.resourceTypeId)
+    .map(
+      (rq) =>
+        resourceTypesMap.get(rq.resourceTypeId)?.name ?? rq.resourceTypeId,
+    )
     .join(", ");
 }
 
@@ -89,6 +96,7 @@ export default function Page() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<JobFilter[]>([]);
+  const [onlyAllReady, setOnlyAllReady] = useState(false);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [mergeName, setMergeName] = useState("");
@@ -124,9 +132,7 @@ export default function Page() {
         common: mergedCommon,
       } as OmitEntityFields<JobI>);
 
-      await Promise.all(
-        selected.map((j) => api.deleteJob(j.id)),
-      );
+      await Promise.all(selected.map((j) => api.deleteJob(j.id)));
 
       return newJob;
     },
@@ -152,7 +158,13 @@ export default function Page() {
   );
 
   const filteredJobs = jobs
-    ? applyFilters(jobs, filters, allParameterTypes ?? [])
+    ? applyFilters(jobs, filters, allParameterTypes ?? []).filter((job) => {
+        if (!onlyAllReady) return true;
+        const allInputs = job.mappings.flatMap((m) => m.inputs);
+        return (
+          allInputs.length > 0 && allInputs.every((i) => i.status === "ready")
+        );
+      })
     : undefined;
 
   const sortedJobs = filteredJobs
@@ -194,6 +206,20 @@ export default function Page() {
           </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="all-ready-filter"
+              checked={onlyAllReady}
+              onCheckedChange={(checked) => setOnlyAllReady(checked === true)}
+            />
+            <Label
+              htmlFor="all-ready-filter"
+              className="cursor-pointer text-sm"
+            >
+              Ready jobs only
+            </Label>
+          </div>
+
           {allResourceTypes && allParameterTypes && (
             <JobFilters
               filters={filters}
@@ -232,9 +258,7 @@ export default function Page() {
                       className="cursor-pointer"
                       onClick={() => router.push(`/entities/jobs/${job.id}`)}
                     >
-                      <TableCell
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedJobIds.has(job.id)}
                           onCheckedChange={() => toggleJobSelection(job.id)}
@@ -331,16 +355,10 @@ export default function Page() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setMergeDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setMergeDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              disabled={!mergeName.trim()}
-              onClick={() => mergeJobs()}
-            >
+            <Button disabled={!mergeName.trim()} onClick={() => mergeJobs()}>
               Merge
             </Button>
           </DialogFooter>
