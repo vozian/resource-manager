@@ -192,10 +192,11 @@ export function seedMockData() {
 
   function seedJob(
     name: string,
+    notes: string,
     mappings: { inputs: object[]; outputs: object[] }[],
     common: object[],
   ) {
-    const data = enrichEntityFields({ name, mappings, common });
+    const data = enrichEntityFields({ name, notes, mappings, common });
     allItems.push({ type: "job", data });
     return data;
   }
@@ -203,6 +204,7 @@ export function seedMockData() {
   // DNA Dilution: two mappings (one per DNA code), same Liquid Handler
   seedJob(
     "DNA Dilution",
+    "Dilute Twist DNA from 100 ng/µL to 10 ng/µL using the liquid handler.",
     [
       {
         inputs: [
@@ -256,6 +258,7 @@ export function seedMockData() {
   // but with different temperature
   seedJob(
     "Protein Expression",
+    "Express proteins from diluted DNA at 37°C for 24 hours.",
     [
       {
         inputs: [
@@ -311,6 +314,7 @@ export function seedMockData() {
   // but at lower temperature — different mappings target ATCGATCG only at 2 mg/mL output
   seedJob(
     "Protein Expression (Low Temp)",
+    "Express proteins at lower temperature (25°C) for higher yield purity.",
     [
       {
         inputs: [
@@ -346,6 +350,7 @@ export function seedMockData() {
   // BLI Binding Assay: two mappings (one per DNA code), same BLI Machine
   seedJob(
     "BLI Binding Assay",
+    "Measure protein-antigen binding kinetics using bio-layer interferometry.",
     [
       {
         inputs: [

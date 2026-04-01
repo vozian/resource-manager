@@ -46,6 +46,7 @@ export type ResourceMappingI = {
 };
 
 export type JobI = NamedEntityI & {
+  notes: string;
   mappings: ResourceMappingI[];
   common: ResourceQuantityI[];
 };

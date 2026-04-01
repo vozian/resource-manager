@@ -133,6 +133,16 @@ export default function Page() {
             <p className="text-sm font-mono">{job.id}</p>
           </div>
 
+          {job.notes && (
+            <>
+              <Separator />
+              <div className="flex flex-col gap-1">
+                <Label className="text-muted-foreground">Notes</Label>
+                <p className="text-sm whitespace-pre-wrap">{job.notes}</p>
+              </div>
+            </>
+          )}
+
           <Separator />
 
           <div className="flex flex-col gap-2">

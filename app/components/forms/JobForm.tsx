@@ -27,6 +27,7 @@ import {
   CardFooter,
 } from "@/app/components/containers/card";
 import { Separator } from "@/app/components/separator";
+import { Textarea } from "@/app/components/textarea";
 import { IconPlus, IconTrash, IconCopy } from "@tabler/icons-react";
 import { Checkbox } from "@/app/components/checkbox";
 
@@ -43,6 +44,7 @@ type MappingFormValues = {
 
 type FormValues = {
   name: string;
+  notes: string;
   mappings: MappingFormValues[];
   common: ResourceQuantityFormValues[];
 };
@@ -468,6 +470,7 @@ export function JobForm({
   } = useForm<FormValues>({
     defaultValues: {
       name: initialData.name ?? "",
+      notes: initialData.notes ?? "",
       mappings:
         initialData.mappings?.map((m) => ({
           inputs: m.inputs.map((rq) => ({
@@ -548,6 +551,7 @@ export function JobForm({
   const submit = handleSubmit((data) => {
     onSubmit({
       name: data.name,
+      notes: data.notes,
       mappings: data.mappings.map((m) => ({
         inputs: toResourceQuantities(m.inputs, allParameterTypes).map(
           (rq, i) => ({
@@ -575,6 +579,15 @@ export function JobForm({
               placeholder="e.g. Centrifugation, Incubation"
               aria-invalid={!!errors.name}
               {...register("name", { required: true })}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="job-notes">Notes</Label>
+            <Textarea
+              id="job-notes"
+              placeholder="Optional notes about this job..."
+              {...register("notes")}
             />
           </div>
 
