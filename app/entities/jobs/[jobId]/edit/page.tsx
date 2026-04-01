@@ -3,6 +3,7 @@
 import { JobForm } from "@/app/components/forms/JobForm";
 import { useApi } from "@/app/components/providers/ApiProvider";
 import { JobI } from "@/lib/core/types";
+import { OmitEntityFields } from "@/app/components/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/app/components/button";
@@ -40,6 +41,20 @@ export default function Page() {
     },
   });
 
+  const { mutate: splitJob } = useMutation({
+    mutationFn: (data: Partial<JobI>) => {
+      return api.createJob({
+        name: `${job?.name ?? "Job"} (split)`,
+        ...data,
+      } as OmitEntityFields<JobI>);
+    },
+    onSuccess: (newJob) => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["job", jobId] });
+      router.push(`/entities/jobs/${newJob.id}`);
+    },
+  });
+
   if (jobPending || !allParameterTypes || !allResourceTypes) {
     return <p className="p-6 text-sm text-muted-foreground">Loading...</p>;
   }
@@ -61,6 +76,7 @@ export default function Page() {
         allParameterTypes={allParameterTypes}
         allResourceTypes={allResourceTypes}
         onSubmit={(data) => updateJob(data)}
+        onSplit={(data) => splitJob(data)}
       />
     </div>
   );

@@ -108,12 +108,34 @@ export function seedMockData() {
     [wellCount.id],
   );
 
+  const protein5_GCTAGCTA = seedResourceType(
+    "Protein (GCTAGCTA, 5 mg/mL)",
+    [
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Protein" },
+      { parameterTypeId: dnaCode.id, value: "GCTAGCTA" },
+      { parameterTypeId: concentration.id, value: 5 },
+    ],
+    [wellCount.id],
+  );
+
   const protein2_ATCGATCG = seedResourceType(
     "Protein (ATCGATCG, 2 mg/mL)",
     [
       { parameterTypeId: category.id, value: "material" },
       { parameterTypeId: materialType.id, value: "Protein" },
       { parameterTypeId: dnaCode.id, value: "ATCGATCG" },
+      { parameterTypeId: concentration.id, value: 2 },
+    ],
+    [wellCount.id],
+  );
+
+  const protein2_GCTAGCTA = seedResourceType(
+    "Protein (GCTAGCTA, 2 mg/mL)",
+    [
+      { parameterTypeId: category.id, value: "material" },
+      { parameterTypeId: materialType.id, value: "Protein" },
+      { parameterTypeId: dnaCode.id, value: "GCTAGCTA" },
       { parameterTypeId: concentration.id, value: 2 },
     ],
     [wellCount.id],
@@ -178,7 +200,7 @@ export function seedMockData() {
     return data;
   }
 
-  // DNA Dilution: Twist DNA (100) → Diluted DNA (10), using Liquid Handler
+  // DNA Dilution: two mappings (one per DNA code), same Liquid Handler
   seedJob(
     "DNA Dilution",
     [
@@ -186,6 +208,7 @@ export function seedMockData() {
         inputs: [
           {
             resourceTypeId: twistDna100_ATCGATCG.id,
+            status: "ready" as const,
             quantityParameters: [
               { parameterTypeId: wellCount.id, value: 96 },
             ],
@@ -194,6 +217,25 @@ export function seedMockData() {
         outputs: [
           {
             resourceTypeId: dilutedDna10_ATCGATCG.id,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 96 },
+            ],
+          },
+        ],
+      },
+      {
+        inputs: [
+          {
+            resourceTypeId: twistDna100_GCTAGCTA.id,
+            status: "ready" as const,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 96 },
+            ],
+          },
+        ],
+        outputs: [
+          {
+            resourceTypeId: dilutedDna10_GCTAGCTA.id,
             quantityParameters: [
               { parameterTypeId: wellCount.id, value: 96 },
             ],
@@ -209,7 +251,9 @@ export function seedMockData() {
     ],
   );
 
-  // Protein Expression: Diluted DNA (10) → Protein (5), using Expression Machine
+  // Protein Expression: two mappings (one per DNA code), same Expression Machine
+  // Shares the same Expression Machine settings as "Protein Expression (Low Temp)" below
+  // but with different temperature
   seedJob(
     "Protein Expression",
     [
@@ -217,6 +261,7 @@ export function seedMockData() {
         inputs: [
           {
             resourceTypeId: dilutedDna10_ATCGATCG.id,
+            status: "ready" as const,
             quantityParameters: [
               { parameterTypeId: wellCount.id, value: 96 },
             ],
@@ -225,6 +270,25 @@ export function seedMockData() {
         outputs: [
           {
             resourceTypeId: protein5_ATCGATCG.id,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 96 },
+            ],
+          },
+        ],
+      },
+      {
+        inputs: [
+          {
+            resourceTypeId: dilutedDna10_GCTAGCTA.id,
+            status: "review" as const,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 96 },
+            ],
+          },
+        ],
+        outputs: [
+          {
+            resourceTypeId: protein5_GCTAGCTA.id,
             quantityParameters: [
               { parameterTypeId: wellCount.id, value: 96 },
             ],
@@ -243,7 +307,43 @@ export function seedMockData() {
     ],
   );
 
-  // BLI Binding Assay: Protein (2) + Antigen (10) → Target Measurement, using BLI Machine
+  // Protein Expression (Low Temp): same common params shape (Expression Machine)
+  // but at lower temperature — different mappings target ATCGATCG only at 2 mg/mL output
+  seedJob(
+    "Protein Expression (Low Temp)",
+    [
+      {
+        inputs: [
+          {
+            resourceTypeId: dilutedDna10_ATCGATCG.id,
+            status: "review" as const,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 48 },
+            ],
+          },
+        ],
+        outputs: [
+          {
+            resourceTypeId: protein2_ATCGATCG.id,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 48 },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      {
+        resourceTypeId: expressionMachine.id,
+        quantityParameters: [
+          { parameterTypeId: duration.id, value: 86400 },
+          { parameterTypeId: temperature.id, value: 25 },
+        ],
+      },
+    ],
+  );
+
+  // BLI Binding Assay: two mappings (one per DNA code), same BLI Machine
   seedJob(
     "BLI Binding Assay",
     [
@@ -251,12 +351,40 @@ export function seedMockData() {
         inputs: [
           {
             resourceTypeId: protein2_ATCGATCG.id,
+            status: "ready" as const,
             quantityParameters: [
               { parameterTypeId: wellCount.id, value: 48 },
             ],
           },
           {
             resourceTypeId: antigen10.id,
+            status: "ready" as const,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 48 },
+            ],
+          },
+        ],
+        outputs: [
+          {
+            resourceTypeId: targetMeasurement.id,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 48 },
+            ],
+          },
+        ],
+      },
+      {
+        inputs: [
+          {
+            resourceTypeId: protein2_GCTAGCTA.id,
+            status: "review" as const,
+            quantityParameters: [
+              { parameterTypeId: wellCount.id, value: 48 },
+            ],
+          },
+          {
+            resourceTypeId: antigen10.id,
+            status: "ready" as const,
             quantityParameters: [
               { parameterTypeId: wellCount.id, value: 48 },
             ],

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import {
   JobI,
@@ -26,7 +27,8 @@ import {
   CardFooter,
 } from "@/app/components/containers/card";
 import { Separator } from "@/app/components/separator";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconPlus, IconTrash, IconCopy } from "@tabler/icons-react";
+import { Checkbox } from "@/app/components/checkbox";
 
 type ResourceQuantityFormValues = {
   resourceTypeId: string;
@@ -140,12 +142,13 @@ function ResourceQuantityFields({
           ? watch(`${baseName}.${index}.status` as any)
           : undefined;
 
-        const statusBorderColor = {
-          ready: "border-l-green-500",
-          unavailable: "border-l-red-500",
-          canceled: "border-l-gray-400",
-          review: "border-l-amber-500",
-        }[watchedStatus as string] ?? "";
+        const statusBorderColor =
+          {
+            ready: "border-l-green-500",
+            unavailable: "border-l-red-500",
+            canceled: "border-l-gray-400",
+            review: "border-l-amber-500",
+          }[watchedStatus as string] ?? "";
 
         return (
           <Card
@@ -448,11 +451,13 @@ export function JobForm({
   allParameterTypes,
   allResourceTypes,
   onSubmit,
+  onSplit,
 }: {
   initialData: Partial<JobI>;
   allParameterTypes: ParameterTypeSetI;
   allResourceTypes: ResourceTypeI[];
   onSubmit: (data: Partial<JobI>) => void;
+  onSplit?: (data: Partial<JobI>) => void;
 }) {
   const {
     register,
@@ -498,6 +503,48 @@ export function JobForm({
     remove: removeMapping,
   } = useFieldArray({ control, name: "mappings" });
 
+  const [selectedMappings, setSelectedMappings] = useState<Set<number>>(
+    new Set(),
+  );
+
+  const toggleMapping = (index: number) => {
+    setSelectedMappings((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const handleSplit = () => {
+    if (!onSplit || selectedMappings.size === 0) return;
+
+    const currentData = watch();
+    const selectedIndices = Array.from(selectedMappings).sort((a, b) => b - a);
+
+    const splitMappings = selectedIndices
+      .map((i) => currentData.mappings[i])
+      .reverse();
+
+    selectedIndices.forEach((i) => removeMapping(i));
+    setSelectedMappings(new Set());
+
+    submit();
+
+    onSplit({
+      mappings: splitMappings.map((m) => ({
+        inputs: toResourceQuantities(m.inputs, allParameterTypes).map(
+          (rq, i) => ({
+            ...rq,
+            status: m.inputs[i].status ?? "review",
+          }),
+        ),
+        outputs: toResourceQuantities(m.outputs, allParameterTypes),
+      })),
+      common: toResourceQuantities(currentData.common, allParameterTypes),
+    });
+  };
+
   const submit = handleSubmit((data) => {
     onSubmit({
       name: data.name,
@@ -537,15 +584,28 @@ export function JobForm({
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <Label>Mappings</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendMapping({ inputs: [], outputs: [] })}
-              >
-                <IconPlus className="size-4" />
-                Add Mapping
-              </Button>
+              <div className="flex gap-2">
+                {onSplit && selectedMappings.size > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSplit}
+                  >
+                    <IconCopy className="size-4" />
+                    Split {selectedMappings.size} to new job
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendMapping({ inputs: [], outputs: [] })}
+                >
+                  <IconPlus className="size-4" />
+                  Add Mapping
+                </Button>
+              </div>
             </div>
 
             {mappingFields.length === 0 && (
@@ -553,16 +613,36 @@ export function JobForm({
             )}
 
             {mappingFields.map((field, index) => (
-              <MappingFields
-                key={field.id}
-                control={control}
-                register={register}
-                watch={watch}
-                mappingIndex={index}
-                allResourceTypes={allResourceTypes}
-                allParameterTypes={allParameterTypes}
-                onRemove={() => removeMapping(index)}
-              />
+              <div key={field.id} className="flex items-start gap-2">
+                {onSplit && (
+                  <Checkbox
+                    className="mt-4"
+                    checked={selectedMappings.has(index)}
+                    onCheckedChange={() => toggleMapping(index)}
+                  />
+                )}
+                <div className="flex-1">
+                  <MappingFields
+                    control={control}
+                    register={register}
+                    watch={watch}
+                    mappingIndex={index}
+                    allResourceTypes={allResourceTypes}
+                    allParameterTypes={allParameterTypes}
+                    onRemove={() => {
+                      removeMapping(index);
+                      setSelectedMappings((prev) => {
+                        const next = new Set<number>();
+                        for (const i of prev) {
+                          if (i < index) next.add(i);
+                          else if (i > index) next.add(i - 1);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
+                </div>
+              </div>
             ))}
           </div>
 
